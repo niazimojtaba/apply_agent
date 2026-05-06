@@ -1,0 +1,9 @@
+# Copy this file to sheet_config.yaml and fill in your values.
+# sheet_config.yaml is git-ignored — your Sheet ID stays private.
+
+# The long ID from your Google Sheet URL:
+# https://docs.google.com/spreadsheets/d/YOUR_SHEET_ID_HERE/edit
+sheet_id: "YOUR_GOOGLE_SHEET_ID"
+
+# Name of the tab/sheet inside your spreadsheet (default: Applications)
+sheet_name: "Applications"

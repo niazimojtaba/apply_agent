@@ -49,9 +49,14 @@ python3 generate_cv_mycompany.py
 
 ```
 cv-generator/
+├── CLAUDE.md                       # instructions for Claude Code (the AI workflow)
 ├── profile.yaml                    # personal info: name, email, phone, LinkedIn (git-ignored)
-├── base_resume.py                  # your complete work history — write once, reuse everywhere
+├── base_cv_template.md             # your full resume in markdown — source of truth (git-ignored)
+│                                   # OR drop base_cv.pdf here instead (git-ignored)
+├── base_resume.py                  # structured resume data imported by CV scripts (git-ignored)
 ├── cv_builder.py                   # PDF rendering engine (no need to edit)
+├── update_sheet.py                 # Google Sheets application logger
+├── sheet_config.yaml.example       # copy → sheet_config.yaml and fill in your Sheet ID
 ├── example_backend_engineer.py     # fully worked example showing the workflow
 ├── requirements.txt
 ├── outputs/                        # generated PDFs land here (git-ignored)
@@ -217,11 +222,76 @@ PDFs are written to `outputs/`. The folder is git-ignored — your generated CVs
 
 ---
 
+## Google Sheets Logging (optional)
+
+Track every application in a spreadsheet automatically.
+
+### Setup
+
+1. Create a Google Sheet with these headers in row 1:
+   ```
+   Company | Applied By | Date | Status | Role | Link | Notes | Match
+   ```
+
+2. Create a [Google Cloud service account](https://console.cloud.google.com/iam-admin/serviceaccounts), enable the Sheets API, and download the JSON key as `service_account.json`.
+
+3. Share your spreadsheet with the service account email (Editor access).
+
+4. Copy the config example and fill in your Sheet ID:
+   ```bash
+   cp sheet_config.yaml.example sheet_config.yaml
+   nano sheet_config.yaml
+   ```
+
+5. Install the extra dependencies:
+   ```bash
+   pip install google-auth google-api-python-client
+   ```
+
+### Usage
+
+```bash
+python3 update_sheet.py \
+  --company "Acme Corp" \
+  --role "Senior Backend Engineer" \
+  --match 82 \
+  --link "https://jobs.acme.com/..." \
+  --status "Applied"
+# → Added: Acme Corp — Senior Backend Engineer (5/6/2026) | Match: 82%
+```
+
+Both `service_account.json` and `sheet_config.yaml` are git-ignored — they never leave your machine.
+
+---
+
+## Using with Claude Code
+
+This project is designed to work with [Claude Code](https://claude.ai/code).
+The `CLAUDE.md` file instructs Claude to run the full application workflow automatically.
+
+Just open this folder in Claude Code and say:
+
+```
+apply for https://jobs.acme.com/senior-backend-engineer
+```
+
+Claude will:
+1. Fetch and parse the job description
+2. Score the match against your base resume
+3. Generate a tailored PDF CV
+4. Log the row to your Google Sheet
+5. Optionally auto-fill the application form (just say "auto-apply")
+
+See `CLAUDE.md` for the full workflow details.
+
+---
+
 ## Requirements
 
 - Python 3.10+
 - `reportlab >= 4.0.0`
 - `PyYAML >= 6.0`
+- *(optional)* `google-auth >= 2.0.0` and `google-api-python-client >= 2.0.0` for sheet logging
 
 ---
 

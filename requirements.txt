@@ -1,2 +1,7 @@
+# Core — PDF generation
 reportlab>=4.0.0
 PyYAML>=6.0
+
+# Optional — Google Sheets logging (needed for update_sheet.py)
+google-auth>=2.0.0
+google-api-python-client>=2.0.0

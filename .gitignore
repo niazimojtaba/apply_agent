@@ -4,5 +4,8 @@ __pycache__/
 *.pyo
 .DS_Store
 *.pdf
-profile.yaml      # personal contact details — never commit
-base_resume.py    # your full work history — never commit (keep local)
+profile.yaml          # your personal contact details — never commit
+base_cv.pdf           # your resume PDF — never commit
+my_base_resume.py     # if you rename base_resume.py with your real data
+sheet_config.yaml     # your Google Sheet ID — never commit
+service_account.json  # Google service account key — never commit

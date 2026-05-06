@@ -1,0 +1,13 @@
+# ── Your personal details ─────────────────────────────────────────────────────
+# Fill this in once. Every CV script reads from here.
+
+name: "Jane Smith"
+title: "Senior Software Engineer"   # default headline (overridden per script)
+email: "jane.smith@example.com"
+phone: "+49 123 4567890"
+location: "Berlin, Germany"
+linkedin: "https://linkedin.com/in/janesmith"   # full URL
+
+# ── Accent colour for the PDF ─────────────────────────────────────────────────
+# Hex string, no leading '#'
+accent_color: "1a5276"   # dark navy — change to match your taste
