@@ -11,8 +11,9 @@ A lightweight Python toolkit for generating clean, ATS-friendly PDF CVs tailored
 
 Most CV tools force you into rigid templates or online editors. This toolkit gives you **full control in plain Python**:
 
-- One `profile.yaml` stores your personal details — edit once, used everywhere
-- One script per job application — tailor bullets, reorder skills, adjust the title
+- One `profile.yaml` for personal details — fill in once
+- One `base_resume.py` for your complete work history — write all your bullets once
+- One script per application — cherry-pick and bold what fits each JD
 - PDF output via [ReportLab](https://www.reportlab.com/) — no browser, no account, no cloud
 
 ---
@@ -27,15 +28,18 @@ cd cv-generator
 # 2. Install dependencies
 pip install -r requirements.txt
 
-# 3. Fill in your details
-nano profile.yaml        # name, email, phone, LinkedIn, location
+# 3. Fill in your personal details
+nano profile.yaml          # name, email, phone, LinkedIn, location
 
-# 4. Copy the example and tailor it
+# 4. Add your full work history
+nano base_resume.py        # all your jobs, bullets, education, awards
+
+# 5. Copy the example and tailor it to a specific JD
 cp example_backend_engineer.py generate_cv_mycompany.py
-nano generate_cv_mycompany.py   # edit summary, skills, bullets
+nano generate_cv_mycompany.py
 
-# 5. Generate
-python generate_cv_mycompany.py
+# 6. Generate
+python3 generate_cv_mycompany.py
 # → outputs/CV_Jane_Smith_Acme_Senior_Backend_Engineer.pdf
 ```
 
@@ -45,19 +49,22 @@ python generate_cv_mycompany.py
 
 ```
 cv-generator/
-├── profile.yaml                    # your personal info (fill once)
-├── cv_builder.py                   # rendering engine (don't edit)
-├── example_backend_engineer.py     # example tailored script
+├── profile.yaml                    # personal info: name, email, phone, LinkedIn (git-ignored)
+├── base_resume.py                  # your complete work history — write once, reuse everywhere
+├── cv_builder.py                   # PDF rendering engine (no need to edit)
+├── example_backend_engineer.py     # fully worked example showing the workflow
 ├── requirements.txt
-├── outputs/                        # generated PDFs go here (git-ignored)
+├── outputs/                        # generated PDFs land here (git-ignored)
 └── README.md
 ```
 
 ---
 
-## How It Works
+## How It Works — Three Layers
 
-### 1. `profile.yaml` — personal details
+### Layer 1 — `profile.yaml` · Personal details
+
+Fill this in once. Every script reads your name, contact info, and accent colour from here automatically.
 
 ```yaml
 name: "Jane Smith"
@@ -65,56 +72,110 @@ email: "jane@example.com"
 phone: "+49 123 4567890"
 location: "Berlin, Germany"
 linkedin: "https://linkedin.com/in/janesmith"
-accent_color: "1a5276"   # hex colour used for headings and bullets
+accent_color: "1a5276"     # hex colour for headings and bullet points
 ```
 
-### 2. Per-role script — tailored content
+---
+
+### Layer 2 — `base_resume.py` · Your complete history
+
+Think of this as your **master resume** — every job you've held, every bullet you've ever written, all your education and awards. Nothing here is printed automatically; you import from it selectively in each script.
 
 ```python
+# base_resume.py
+
+SKILLS = {
+    "languages":    "Go, Python, C++, Scala",
+    "cloud":        "AWS (EKS, S3, IAM), Kubernetes, Docker, Helm, Terraform",
+    "messaging":    "Kafka, Temporal — event-driven architecture at scale",
+    "databases":    "PostgreSQL, Elasticsearch, Redis",
+    "observability":"ELK stack, SLO/SLI/error budgets, distributed tracing",
+}
+
+JOBS = {
+    "acme_senior": {
+        "header":  "Acme Corp — Senior Backend Engineer",
+        "period":  "Jan 2022 – Present | Berlin, Germany",
+        "desc":    "B2B SaaS platform — 500+ enterprise customers.",
+        "bullets": [
+            # Write every bullet you could ever use for this role.
+            # You'll pick the best ones per application.
+            "Designed <b>Kafka</b> ingestion pipeline processing <b>2M events/day</b>…",
+            "Migrated monolith to <b>Kubernetes (EKS)</b> — cut release cycle to <b>2 days</b>.",
+            "Defined <b>SLOs/SLIs</b> and error budgets — <b>99.9% uptime</b>.",
+            "Led <b>PostgreSQL</b> zero-downtime migrations on 200M-row table…",
+        ],
+    },
+    # add more jobs…
+}
+
+EDUCATION = [
+    ("MSc Computer Science", "TU Berlin (2016–2018)", "Thesis: Distributed Consensus…"),
+    ("BSc Computer Engineering", "University of Example (2012–2016)", ""),
+]
+
+AWARDS = ["1st place — Hackathon 2023", "Top 10% — Advent of Code 2022"]
+```
+
+---
+
+### Layer 3 — Per-role script · Tailored application
+
+Copy `example_backend_engineer.py`, rename it, and select/reorder content from `base_resume.py` to match the specific JD. Bold the keywords the JD uses. Adjust the summary and title.
+
+```python
+# generate_cv_mycompany.py
+
 from cv_builder import CVBuilder
+import base_resume as base
 
 cv = CVBuilder("outputs/CV_Jane_Smith_Acme_Engineer.pdf")
 
-cv.header("Senior Backend Engineer — Go & Kubernetes")
+# Title tailored to this JD
+cv.header("Senior Backend Engineer — Go, Kubernetes &amp; Distributed Systems")
 
-cv.summary("Senior engineer with 8+ years building <b>distributed systems</b>…")
+# Summary rewritten for this role
+cv.summary(
+    "Senior engineer with <b>8+ years</b> building <b>distributed systems</b> "
+    "in <b>Go</b>. Deep experience with <b>Kubernetes</b> and <b>Kafka</b> at "
+    "<b>10M+ user scale</b>. Berlin-based, 1-month notice."
+)
 
+# Skills — reorder to match the JD's preferred stack
 cv.skills([
-    ("Languages",  "Go, Python, C++"),
-    ("Cloud",      "AWS, Kubernetes, Terraform"),
-    ("Databases",  "PostgreSQL, Redis"),
+    ("Languages", "<b>Go</b> (primary), Python, C++"),
+    ("Cloud",     "<b>AWS</b>, <b>Kubernetes</b>, Terraform"),
+    ("Databases", base.SKILLS["databases"]),   # reuse from base
 ])
 
+# Jobs — import from base, pick only the most relevant bullets
+acme = base.JOBS["acme_senior"]
 cv.job(
-    "Acme Corp — Senior Backend Engineer",
-    "2022–Present | Berlin",
-    "B2B SaaS — 500 enterprise customers.",
+    acme["header"], acme["period"], acme["desc"],
     [
-        "Designed <b>Kafka</b> ingestion pipeline processing <b>2M events/day</b>.",
-        "Reduced p99 latency from <b>800 ms to 60 ms</b> via query optimisation.",
+        acme["bullets"][0],   # Kafka — JD asks for event-driven
+        acme["bullets"][1],   # Kubernetes — JD asks for K8s
+        acme["bullets"][2],   # SLO/uptime — JD asks for SRE
     ]
 )
 
-cv.education([("MSc Computer Science", "TU Berlin (2018–2020)", "")])
-cv.awards(["1st place — Internal Hackathon 2023"])
-
+cv.education(base.EDUCATION)
+cv.awards(base.AWARDS)
 cv.build()
 ```
 
-### 3. Run it
-
 ```bash
-python generate_cv_acme.py
-# → outputs/CV_Jane_Smith_Acme_Senior_Backend_Engineer.pdf
+python3 generate_cv_mycompany.py
+# → outputs/CV_Jane_Smith_MyCompany_Senior_Backend_Engineer.pdf
 ```
 
 ---
 
 ## Tailoring Tips
 
-### Match score before you write
+### Score the JD before writing
 
-Before tailoring, score the JD against your experience (0–100%). Only apply if ≥65%.
+Compare the JD requirements to your experience and assign a score before writing a single word.
 
 | Score | Signal |
 |-------|--------|
@@ -125,7 +186,7 @@ Before tailoring, score the JD against your experience (0–100%). Only apply if
 
 ### Language order
 
-Always list languages in the order the JD emphasises them:
+Always list languages in the order the JD emphasises them — the recruiter's eye lands on the first word:
 
 ```python
 # Backend/infra role (Go preferred)
@@ -135,12 +196,12 @@ Always list languages in the order the JD emphasises them:
 ("Languages", "Python, Go, C++")
 ```
 
-### Bold JD keywords
+### Bold JD keywords inline
 
-Wrap exact JD terms in `<b>…</b>` tags. ATS parsers and recruiters both scan for these:
+Wrap exact JD terms in `<b>…</b>`. Both ATS parsers and recruiters scan for these:
 
 ```python
-"Designed <b>event-driven architecture</b> using <b>Kafka</b> and <b>Temporal</b>…"
+"Built <b>event-driven architecture</b> using <b>Kafka</b> and <b>Temporal</b>…"
 ```
 
 ### Ground every bullet in a number
