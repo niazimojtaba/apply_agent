@@ -1,0 +1,7 @@
+outputs/
+__pycache__/
+*.pyc
+*.pyo
+.DS_Store
+*.pdf
+profile.yaml   # keep personal details out of git
